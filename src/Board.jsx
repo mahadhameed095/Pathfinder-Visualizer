@@ -1,19 +1,21 @@
 import React from "react";
 import styled, { createGlobalStyle, keyframes } from "styled-components";
+// import FlagCircleIcon from '@mui/icons-material/FlagCircle';
+// import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import RightArrow from './Assets/RightArrow.svg';
+import Target from './Assets/Target.svg';
 import Animator from "./Animator";
 import djikstra from "./Algorithms/Djikstra";
 
-const visit = keyframes`
+const creation = keyframes`
   from {
     transform : scale(0.3);
     border-radius : 50%;
-    background-color : hsl(200, 70%, 60%)
   }
 
   to {
     transform : scale(1.0);
     border-radius : 0%;
-    background-color: hsl(238, 89%, 70%)
   }
 `;
 const GlobalStyle = createGlobalStyle`
@@ -29,16 +31,31 @@ const Grid = styled.div`
 `;
 const GridCell = styled.div`
   aspect-ratio : 1;
-  padding : 0.5em;
+  border-style : solid;
+  border-width : 0 0 1px 1px
 `;
+
+const IconCell = styled(GridCell)`
+  border-color : gray;
+  background-size: cover;
+  background-image:url(${props => props.image});
+`;
+
 const VisitedCell = styled(GridCell)`
-  border : 1px solid white;
-  animation: ${visit} 2s forwards;
+  border-color : white;
+  animation: ${creation} 2s forwards;
+  background-color : hsl(200, 70%, 60%);
 `;
 
 const Cell = styled(GridCell)`
   background-color: ${props => props.color};
-  border : 1px solid gray
+  border-color : gray;
+`;
+
+const Wall = styled(GridCell)`
+  border-color : white;
+  animation: ${creation} 0.5s forwards;
+  background-color : gray;
 `;
 
 export default function Board() {
@@ -50,7 +67,7 @@ export default function Board() {
     board[target[0]][target[1]] = 2;
     return board;
   }
-  const [M, N] = [25, 60];
+  const [M, N] = [20, 40];
   const source = [10, 10];
   const target = [10, 20];
   const [cells, setcells] = React.useState(initBoard(M, N, source, target));
@@ -92,9 +109,9 @@ export default function Board() {
   const CellFactory = (id, row, column) => {
     switch(id){
       case 0 : return <Cell key = {[row, column]} color='white' onClick = {() => setcells(updateIndices([[row, column]], [3], cells))}/>; /*Normal Cell*/
-      case 1 : return <Cell key = {[row, column]} color='yellow'/>; /* Source */
-      case 2 : return <Cell key = {[row, column]} color='cyan'/>; /* Target */
-      case 3 : return <Cell key = {[row, column]} color='gray'/>; /* Wall */
+      case 1 : return <IconCell key = {[row, column]} image = {RightArrow}/>
+      case 2 : return <IconCell key = {[row, column]} image = {Target}/>
+      case 3 : return <Wall key = {[row, column]} onClick = {() => setcells(updateIndices([[row, column]], [0], cells))}/>; /* Wall */
       case 4 : return <Cell key = {[row, column]} color='green'/>; /* Path */
       case 5 : return <VisitedCell key = {[row, column]}/>; /* Visisted cell */
       default : return null;
@@ -106,7 +123,13 @@ export default function Board() {
       <div>
         <Grid n={N}>
           {
-            cells && cells.map((item, row) => item.map((subItem, column) => CellFactory(subItem, row, column)))
+            cells && cells.map((item, row) => item.map((subItem, column) => 
+              <div>
+                {
+                  CellFactory(subItem, row, column)
+                }
+              </div>
+            ))
           }
         </Grid>
         <button onClick={() => {frames.current = djikstra(cells, source, target); animator.current.start();}}>Click please</button>
