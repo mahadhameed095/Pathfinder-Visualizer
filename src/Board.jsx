@@ -7,6 +7,14 @@ import Target from './Assets/Target.svg';
 import Animator from "./Animator";
 import djikstra from "./Algorithms/Djikstra";
 
+const GlobalStyle = createGlobalStyle`
+  body {
+    margin : 0;
+    padding : 0;
+    box-sizing : border-box;
+  }
+`;
+
 const creation = keyframes`
   from {
     transform : scale(0.3);
@@ -18,42 +26,30 @@ const creation = keyframes`
     border-radius : 0%;
   }
 `;
-const GlobalStyle = createGlobalStyle`
-  body {
-    margin : 0;
-    padding : 0;
-  }
-`;
+
 const Grid = styled.div`
   display: grid;
-  // grid-gap: 0.2rem;
   grid-template-columns: repeat(${ props => props.n }, 1fr);
 `;
 const GridCell = styled.div`
   aspect-ratio : 1;
-  border-style : solid;
-  border-width : 0 0 1px 1px
+  border : 1px solid #e7e7e7;
 `;
 
 const IconCell = styled(GridCell)`
-  border-color : gray;
   background-size: cover;
   background-image:url(${props => props.image});
+  color : gray;
 `;
-
 const VisitedCell = styled(GridCell)`
-  border-color : white;
   animation: ${creation} 2s forwards;
   background-color : hsl(200, 70%, 60%);
 `;
-
 const Cell = styled(GridCell)`
   background-color: ${props => props.color};
-  border-color : gray;
 `;
 
 const Wall = styled(GridCell)`
-  border-color : white;
   animation: ${creation} 0.5s forwards;
   background-color : gray;
 `;
@@ -92,16 +88,21 @@ export default function Board() {
     const nextFrame = frames.current.next();
     let board;
     if(nextFrame.done){
-      board = updateIndices(nextFrame.value, [4], cells);
-      animatorRef.stop() 
-    }
-    else{
+      animatorRef.stop();
+      return;
+    } 
+    
+    if(nextFrame.value.type == "visited"){
       board = [...cells];
       board.map((row, i) => row.map((item, j) => 
       {
-        if(nextFrame.value[[i, j]].visited && board[i][j] === 0) board[i][j] = 5;
+        if(nextFrame.value.value[[i, j]].visited && board[i][j] === 0) board[i][j] = 5;
         return item;
       }));
+    }
+    else if(nextFrame.value.type == "path"){
+      if(nextFrame.value.value == null) alert("No pathh!!!");
+      board = updateIndices([nextFrame.value.value], [4], cells);
     }
     updateFrame(board);
   }));
@@ -123,13 +124,7 @@ export default function Board() {
       <div>
         <Grid n={N}>
           {
-            cells && cells.map((item, row) => item.map((subItem, column) => 
-              <div>
-                {
-                  CellFactory(subItem, row, column)
-                }
-              </div>
-            ))
+            cells && cells.map((item, row) => item.map((subItem, column) => CellFactory(subItem, row, column)))
           }
         </Grid>
         <button onClick={() => {frames.current = djikstra(cells, source, target); animator.current.start();}}>Click please</button>

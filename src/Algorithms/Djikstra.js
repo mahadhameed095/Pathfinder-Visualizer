@@ -67,15 +67,15 @@ export default function* djikstra(board, source, target){
       }
       return V;
     });
-    yield nodes;
+    yield {type : "visited", value : nodes};
   }
   let index = target;
   while(true){
     index = previous[index];
-    if(index === null) return path;
+    if(index === null) return { type : "path", value : null};
     if (index === source) break;
     path.push(index);
+    yield { type : "path", value : index};
   }
-
-  return path;
+  return { type : "path", value : path }
 }
