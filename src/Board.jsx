@@ -17,7 +17,7 @@ const GlobalStyle = createGlobalStyle`
 
 const creation = keyframes`
   from {
-    transform : scale(0.3);
+    transform : scale(0.1);
     border-radius : 50%;
   }
 
@@ -30,6 +30,7 @@ const creation = keyframes`
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(${ props => props.n }, 1fr);
+  grid-gap : 1px;
 `;
 const GridCell = styled.div`
   aspect-ratio : 1;
@@ -53,7 +54,10 @@ const Wall = styled(GridCell)`
   animation: ${creation} 0.5s forwards;
   background-color : gray;
 `;
-
+const Path = styled(GridCell)`
+  animation: ${creation} 0.5s forwards;
+  background-color : green;
+`;
 export default function Board() {
   
   
@@ -113,7 +117,7 @@ export default function Board() {
       case 1 : return <IconCell key = {[row, column]} image = {RightArrow}/>
       case 2 : return <IconCell key = {[row, column]} image = {Target}/>
       case 3 : return <Wall key = {[row, column]} onClick = {() => setcells(updateIndices([[row, column]], [0], cells))}/>; /* Wall */
-      case 4 : return <Cell key = {[row, column]} color='green'/>; /* Path */
+      case 4 : return <Path key = {[row, column]}/>; /* Path */
       case 5 : return <VisitedCell key = {[row, column]}/>; /* Visisted cell */
       default : return null;
     }
