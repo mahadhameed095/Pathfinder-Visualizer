@@ -39,15 +39,17 @@ const GridCell = styled.div`
 `;
 
 const IconCell = styled(GridCell)`
+  animation: ${creation} 0.5s forwards;
   background-size: cover;
   background-image:url(${props => props.image});
   color : gray;
+  user-select:none;
 `;
 const VisitedCell = styled(GridCell)`
   animation: ${creation} 2s forwards;
   background-color : hsl(200, 70%, 60%);
 `;
-const Cell = styled(GridCell)`
+const NormalCell = styled(GridCell)`
   background-color: ${props => props.color};
 `;
 
@@ -69,11 +71,12 @@ export default function Board() {
     return board;
   }
   const [M, N] = [20, 40];
-  const source = [10, 10];
-  const target = [10, 20];
-  const [cells, setcells] = React.useState(initBoard(M, N, source, target));
+  const source = React.useRef([10, 10]);
+  const target = React.useRef([10, 20]);
+  const [cells, setcells] = React.useState(initBoard(M, N, source.current, target.current));
   const frames = React.useRef(null);
   const isMouseDown = React.useRef(false);
+  const isDragging = React.useRef(0);
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
   
   const updateFrame = (board) => {setcells(board); forceUpdate();}
@@ -94,6 +97,7 @@ export default function Board() {
     const nextFrame = frames.current.next();
     let board;
     if(nextFrame.done){
+      if(nextFrame.value.value === null) alert("No pathh!!!");
       animatorRef.stop();
       return;
     } 
@@ -107,28 +111,65 @@ export default function Board() {
       }));
     }
     else if(nextFrame.value.type === "path"){
-      if(nextFrame.value.value === null) alert("No pathh!!!");
       board = updateIndices([nextFrame.value.value], [4], cells);
     }
     updateFrame(board);
   }));
 
+  const clickNormalCell = (row, column) => {
+    if(isDragging.current !== 0)
+    {
+      setcells(updateIndices([[row, column]], [isDragging.current], cells));
+      
+      if(isDragging.current === 1){
+        source.current = [row, column]
+      }
+      else if(isDragging.current === 2){
+        target.current = [row, column];
+      }
+      else alert("Errorrrr");
+      isDragging.current = 0;
+    }
+    else{
+      setcells(updateIndices([[row, column]], [3], cells));
+    }
+  }
+
+  const clickIconCell = (row, column, id) => {
+      setcells(updateIndices([[row, column]], [0], cells));
+      isDragging.current = id;
+  }
+  
   const CellFactory = (id, row, column) => {
     switch(id){
-      case 0 : return <Cell key = {[row, column]} 
-                            color='white' 
-                            onMouseMove = {() => isMouseDown.current && setcells(updateIndices([[row, column]], [3], cells))}
-                            onClick = {() => setcells(updateIndices([[row, column]], [3], cells))}
-                            />; /*Normal Cell*/
+      case 0 : return <NormalCell 
+                        key = {[row, column]} 
+                        color='white' 
+                        onMouseMove = {() => isMouseDown.current && setcells(updateIndices([[row, column]], [3], cells))}
+                        onClick = {() =>clickNormalCell(row, column)}
+                        />; /*Normal Cell*/
 
-      case 1 : return <IconCell key = {[row, column]} image = {RightArrow} draggable={false}/>
-      case 2 : return <IconCell key = {[row, column]} image = {Target} draggable={false}/>
+      case 1 : return <IconCell 
+                        key = {[row, column]} 
+                        image = {RightArrow} 
+                        draggable={false}
+                        onClick = {() => clickIconCell(row, column, id)}
+                        />
+ 
+      case 2 : return <IconCell 
+                        key = {[row, column]} 
+                        image = {Target} 
+                        draggable={false}
+                        onClick = {() => clickIconCell(row, column, id)}
+                        />
+
       case 3 : return <Wall key = {[row, column]} 
-                            onMouseMove = {() => isMouseDown.current && setcells(updateIndices([[row, column]], [0], cells))}
-                            onClick = {() => setcells(updateIndices([[row, column]], [0], cells))}
-                            />; /* Wall */
+                        onClick = {() => setcells(updateIndices([[row, column]], [0], cells))}
+                        />; /* Wall */
       case 4 : return <Path key = {[row, column]}/>; /* Path */
+ 
       case 5 : return <VisitedCell key = {[row, column]}/>; /* Visisted cell */
+ 
       default : return null;
     }
   }
