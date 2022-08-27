@@ -28,6 +28,7 @@ const creation = keyframes`
 `;
 
 const Grid = styled.div`
+  background-color : #e9e9e9;
   display: grid;
   grid-template-columns: repeat(${ props => props.n }, 1fr);
   grid-gap : 1px;
@@ -56,7 +57,7 @@ const Wall = styled(GridCell)`
 `;
 const Path = styled(GridCell)`
   animation: ${creation} 0.5s forwards;
-  background-color : green;
+  background-color : #f15757;
 `;
 export default function Board() {
   
@@ -72,6 +73,7 @@ export default function Board() {
   const target = [10, 20];
   const [cells, setcells] = React.useState(initBoard(M, N, source, target));
   const frames = React.useRef(null);
+  const isMouseDown = React.useRef(false);
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
   
   const updateFrame = (board) => {setcells(board); forceUpdate();}
@@ -96,7 +98,7 @@ export default function Board() {
       return;
     } 
     
-    if(nextFrame.value.type == "visited"){
+    if(nextFrame.value.type === "visited"){
       board = [...cells];
       board.map((row, i) => row.map((item, j) => 
       {
@@ -104,8 +106,8 @@ export default function Board() {
         return item;
       }));
     }
-    else if(nextFrame.value.type == "path"){
-      if(nextFrame.value.value == null) alert("No pathh!!!");
+    else if(nextFrame.value.type === "path"){
+      if(nextFrame.value.value === null) alert("No pathh!!!");
       board = updateIndices([nextFrame.value.value], [4], cells);
     }
     updateFrame(board);
@@ -113,10 +115,18 @@ export default function Board() {
 
   const CellFactory = (id, row, column) => {
     switch(id){
-      case 0 : return <Cell key = {[row, column]} color='white' onClick = {() => setcells(updateIndices([[row, column]], [3], cells))}/>; /*Normal Cell*/
-      case 1 : return <IconCell key = {[row, column]} image = {RightArrow}/>
-      case 2 : return <IconCell key = {[row, column]} image = {Target}/>
-      case 3 : return <Wall key = {[row, column]} onClick = {() => setcells(updateIndices([[row, column]], [0], cells))}/>; /* Wall */
+      case 0 : return <Cell key = {[row, column]} 
+                            color='white' 
+                            onMouseMove = {() => isMouseDown.current && setcells(updateIndices([[row, column]], [3], cells))}
+                            onClick = {() => setcells(updateIndices([[row, column]], [3], cells))}
+                            />; /*Normal Cell*/
+
+      case 1 : return <IconCell key = {[row, column]} image = {RightArrow} draggable={false}/>
+      case 2 : return <IconCell key = {[row, column]} image = {Target} draggable={false}/>
+      case 3 : return <Wall key = {[row, column]} 
+                            onMouseMove = {() => isMouseDown.current && setcells(updateIndices([[row, column]], [0], cells))}
+                            onClick = {() => setcells(updateIndices([[row, column]], [0], cells))}
+                            />; /* Wall */
       case 4 : return <Path key = {[row, column]}/>; /* Path */
       case 5 : return <VisitedCell key = {[row, column]}/>; /* Visisted cell */
       default : return null;
@@ -126,13 +136,12 @@ export default function Board() {
     <React.Fragment>
       <GlobalStyle/>
       <div>
-        <Grid n={N}>
+        <Grid n={N} onMouseDown = {() => isMouseDown.current = true} onMouseUp = {() => isMouseDown.current = false}>
           {
             cells && cells.map((item, row) => item.map((subItem, column) => CellFactory(subItem, row, column)))
           }
         </Grid>
         <button onClick={() => {frames.current = djikstra(cells, source, target); animator.current.start();}}>Click please</button>
-        {/* <button onClick={() => animator.current.stop()}>Stop please</button>     */}
       </div>
     </React.Fragment>
   );
