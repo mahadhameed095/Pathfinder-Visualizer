@@ -44,11 +44,11 @@ export default function* djikstra(board, source, target){
       previous[[i, j]] = null;
     }
   }
-  nodes[source.current] = {visited : true, distance : 0};
-  const queue = [source.current];
+  nodes[source] = {visited : true, distance : 0};
+  const queue = [source];
   while(queue.length > 0){
     const U = queue.shift();
-    if(U[0] === target.current[0] && U[1] === target.current[1]) break;
+    if(U[0] === target[0] && U[1] === target[1]) break;
     const neighbours = Neighbours(U, m, n);
     neighbours.map( V => {
       if(board[V[0]][V[1]] === 3){  /* 3 means its a wall */
@@ -69,11 +69,11 @@ export default function* djikstra(board, source, target){
     });
     yield {type : "visited", value : nodes};
   }
-  let index = target.current;
+  let index = target;
   while(true){
     index = previous[index];
     if(index === null) return { type : "path", value : null};
-    if (index === source.current) break;
+    if (index === source) break;
     path.push(index);
     yield { type : "path", value : index};
   }
