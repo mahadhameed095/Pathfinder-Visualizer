@@ -4,6 +4,7 @@ import RightArrow from './Assets/RightArrow.svg';
 import Target from './Assets/Target.svg';
 import Animator from "./Animator";
 import djikstra from "./Algorithms/Djikstra";
+
 const GlobalStyle = createGlobalStyle`
   body {
     margin : 0;
@@ -127,10 +128,11 @@ export default class Board extends React.Component{
     const board = Array.from({length: rows},()=> Array.from({length: columns}, () => 0));
     this.source[0] = getRandomInt(0, rows);
     this.source[1] = getRandomInt(0, columns);
-    while(this.target[0] === this.source[0] && this.target[1] === this.source[1]){
+    do{
       this.target[0] = getRandomInt(0, rows);
       this.target[1] = getRandomInt(0, columns);
     }
+    while(this.target[0] === this.source[0] && this.target[1] === this.source[1]);
     board[this.source[0]][this.source[1]] = 1;
     board[this.target[0]][this.target[1]] = 2;
     return board;
@@ -164,6 +166,24 @@ export default class Board extends React.Component{
     else{
       this.setState({cells: this.updateIndices([[row, column]], [3], this.state.cells)});
     }
+  }
+  setAlgorithm(algorithm){
+    switch(algorithm){
+      case "djikstra":
+        this.frames = djikstra(this.state.cells, this.source, this.target);
+    }
+    console.log(this.frames);
+  }
+  start(){
+    this.animator.start();
+  }
+  stop(){
+    this.animator.stop();
+  }
+  clear(){
+    console.log(this.state.cells);
+    const board = this.state.cells.map(row => row.map(cell => (cell === 3 || cell === 5 || cell == 4) ? 0 : cell));
+    this.setState({cells : board});
   }
   clickIconCell(row, column, id){
     if(this.frames === null){
