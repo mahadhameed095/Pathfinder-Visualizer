@@ -1,7 +1,5 @@
 import React from "react";
 import styled, { createGlobalStyle, keyframes } from "styled-components";
-// import FlagCircleIcon from '@mui/icons-material/FlagCircle';
-// import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import RightArrow from './Assets/RightArrow.svg';
 import Target from './Assets/Target.svg';
 import Animator from "./Animator";
@@ -11,6 +9,7 @@ const GlobalStyle = createGlobalStyle`
     margin : 0;
     padding : 0;
     box-sizing : border-box;
+    overflow : hidden;
   }
 `;
 
@@ -63,17 +62,35 @@ const Path = styled(GridCell)`
   background-color : #f15757;
 `;
 
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+}
 
 export default class Board extends React.Component{
   constructor(){
     super();
     this.source = [0, 0];
-    this.target = [0, 5];
-    this.cell = React.createRef();
+    this.target = [0, 0];
     this.state = {cells : this.makeBoard(15, 30)};
+    this.grid = React.createRef();
     this.frames = null;
     this.isMouseDown = false;
     this.isDragging = 0;
+    
+    this.resizeGrid = () => {
+      // console.log(window.innerWidth, window.innerHeight)
+      const containerWidth = this.grid.current.offsetWidth;
+      const containerHeight = this.grid.current.offsetHeight;
+
+      const cols = Math.floor((containerWidth * 29)/1200); /* 1600 * 0.75 = 1200 */
+      const rows = Math.floor(containerHeight / (containerWidth / cols - 1));
+      
+      this.setState({cells:this.makeBoard(rows, cols)});
+      this.forceUpdate();
+    }
+
     this.animator = new Animator(60, (animatorRef) => {
     const nextFrame = this.frames.next();
       let board;
@@ -99,33 +116,24 @@ export default class Board extends React.Component{
       this.forceUpdate();
     });
   }
-  // initBoard(){
-  //   this.setState({cells:this.makeBoard()});
-  // }
   componentDidMount(){
-    const resizeGrid = (windowWidth, windowHeight) => {
-      
-      const containerWidth = windowWidth * (1 - 0.25);
-      const containerHeight = windowHeight;
-
-      const cols = Math.floor((containerWidth * 31)/1200); /* 1600 * 0.75 = 1200 */
-      const rows = Math.floor(containerHeight / (containerWidth / cols - 1));
-      this.setState({cells:this.makeBoard(rows, cols)});
-    }
-    resizeGrid(window.innerWidth, window.innerHeight);
-    window.addEventListener('resize', () => resizeGrid(window.innerWidth, window.innerHeight));
+    this.resizeGrid();
+    window.addEventListener('resize', this.resizeGrid);
   }
   componentWillUnmount(){
-    // window.removeEventListener('resize')
+    window.removeEventListener('resize', this.resizeGrid);
   }
   makeBoard(rows, columns){
     const board = Array.from({length: rows},()=> Array.from({length: columns}, () => 0));
+    this.source[0] = getRandomInt(0, rows);
+    this.source[1] = getRandomInt(0, columns);
+    while(this.target[0] === this.source[0] && this.target[1] === this.source[1]){
+      this.target[0] = getRandomInt(0, rows);
+      this.target[1] = getRandomInt(0, columns);
+    }
     board[this.source[0]][this.source[1]] = 1;
     board[this.target[0]][this.target[1]] = 2;
     return board;
-  }
-  getWidth(){
-    return this.cell.current.offsetWidth;
   }
   updateIndices(indices, values, array){
     const board = [...array];
@@ -175,7 +183,6 @@ export default class Board extends React.Component{
       case 1 : return <IconCell 
                         key = {[row, column]} 
                         image = {RightArrow} 
-                        ref = {this.cell}
                         draggable={false}
                         onClick = {() => this.clickIconCell(row, column, id)}
                         />
@@ -201,7 +208,7 @@ export default class Board extends React.Component{
     return(
     <React.Fragment>
       <GlobalStyle/>
-        <Grid n={this.state.cells[0].length} 
+        <Grid ref={this.grid} n={this.state.cells[0].length} 
               onMouseDown = {() => this.isMouseDown = true} 
               onMouseUp = {() => this.isMouseDown = false}>
           {

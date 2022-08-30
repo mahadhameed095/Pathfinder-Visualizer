@@ -7,7 +7,7 @@ export default function App() {
     return (
 
         <Box display='flex' width='100vw' height='100vh'>
-            <Paper style={{width:'25%'}}>
+            <Paper style={{width:'30%'}}>
 
             </Paper>
             <Board/>
