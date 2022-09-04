@@ -38,6 +38,7 @@ export default function* djikstra(board, source, target){
   const previous = {};
   const path = [];
   const [m, n] = [board.length, board[0].length];
+  // console.log("D=>",[board.length, board[0].length]);
   for (let i = 0; i < m; i++) {
     for (let j = 0 ; j < n ; j++){
       nodes[[i, j]] = {visited: false, distance :Infinity};
