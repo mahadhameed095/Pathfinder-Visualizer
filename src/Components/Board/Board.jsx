@@ -1,9 +1,9 @@
 import React from "react";
 import styled, { createGlobalStyle, keyframes } from "styled-components";
-import RightArrow from './Assets/RightArrow.svg';
-import Target from './Assets/Target.svg';
-import Animator from "./Animator";
-import djikstra from "./Algorithms/Djikstra";
+import RightArrow from '../../Assets/RightArrow.svg';
+import Target from '../../Assets/Target.svg';
+import Animator from "../../Animator";
+import djikstra from "../../Algorithms/Djikstra";
 
 const GlobalStyle = createGlobalStyle`
   body {
