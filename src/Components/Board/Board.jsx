@@ -4,7 +4,7 @@ import Source from '../../Assets/Source.svg';
 import Target from '../../Assets/Target.svg';
 import Animator from "../../Animator";
 import djikstra from "../../Algorithms/Djikstra";
-
+import * as CONSTANTS from "../../constants";
 const GlobalStyle = createGlobalStyle`
   body {
     margin : 0;
@@ -23,6 +23,19 @@ const creation = keyframes`
   to {
     transform : scale(1.0);
     border-radius : 0%;
+  }
+`;
+const visited_creation = keyframes`
+  from {
+    transform : scale(0.1);
+    border-radius : 50%;
+    background-color : #666bcb;
+  }
+
+  to {
+    transform : scale(1.0);
+    border-radius : 0%;
+    background-color : #4ae7aa;
   }
 `;
 
@@ -48,7 +61,7 @@ const IconCell = styled(GridCell)`
   user-select:none;
 `;
 const VisitedCell = styled(GridCell)`
-  animation: ${creation} 2s forwards;
+  animation: ${visited_creation} 2s forwards;
   background-color : hsl(200, 70%, 60%);
 `;
 const NormalCell = styled(GridCell)`
@@ -73,8 +86,8 @@ function getRandomInt(min, max) {
 export default class Board extends React.Component{
   constructor(){
     super();
-    this.source = [0, 0];
-    this.target = [0, 0];
+    this.source = null;
+    this.target = null;
     this.state = {cells : this.makeBoard(15, 29)};
     this.grid = React.createRef();
     this.frames = null;
@@ -89,7 +102,6 @@ export default class Board extends React.Component{
     this.resizeGrid = () => {
       const containerWidth = this.grid.current.offsetWidth;
       const containerHeight = this.grid.current.offsetHeight;
-
       const cols = Math.floor((containerWidth * 29)/1200);
       const rows = Math.floor(containerHeight / (containerWidth / cols - 1));
       this.setState({cells:this.makeBoard(rows, cols)});
@@ -107,10 +119,10 @@ export default class Board extends React.Component{
       } 
       
       if(nextFrame.value.type === "visited"){
-        board = this.state.cells.map((row, i) => row.map((item, j) => nextFrame.value.value[[i, j]].visited && item === 0 ? 5 : item))
+        board = this.state.cells.map((row, i) => row.map((item, j) => nextFrame.value.value[[i, j]].visited && item === CONSTANTS.NORMAL ? CONSTANTS.VISITED : item))
       }
       else if(nextFrame.value.type === "path"){
-        board = this.updateIndices([nextFrame.value.value], [4], this.state.cells);
+        board = this.updateIndices([nextFrame.value.value], [CONSTANTS.PATH], this.state.cells);
       }
       this.setState({cells:board});
       this.forceUpdate();
@@ -129,16 +141,15 @@ export default class Board extends React.Component{
     return this.animator.playing;
   }
   makeBoard(rows, columns){
-    const board = Array.from({length: rows},()=> Array.from({length: columns}, () => 0));
-    this.source[0] = getRandomInt(0, rows);
-    this.source[1] = getRandomInt(0, columns / 2);
+    
+    const board = Array.from({length: rows},()=> Array.from({length: columns}, () => CONSTANTS.NORMAL));
+    this.source = [getRandomInt(0, rows), getRandomInt(0, columns / 2)]
     do{
-      this.target[0] = getRandomInt(0, rows);
-      this.target[1] = getRandomInt(columns / 2 + 1, columns);
+      this.target = [getRandomInt(0, rows), getRandomInt(columns / 2 + 1, columns)]
     }
     while(this.target[0] === this.source[0] && this.target[1] === this.source[1]);
-    board[this.source[0]][this.source[1]] = 1;
-    board[this.target[0]][this.target[1]] = 2;
+    board[this.source[0]][this.source[1]] = CONSTANTS.SOURCE;
+    board[this.target[0]][this.target[1]] = CONSTANTS.TARGET;
     return board;
   }
   updateIndices(indices, values, array){
@@ -154,21 +165,21 @@ export default class Board extends React.Component{
   }
 
   clickNormalCell(row, column){
-    if(this.isDragging !== 0)
+    if(this.isDragging !== null)
     {
       this.setState({cells: this.updateIndices([[row, column]], [this.isDragging], this.state.cells)});
       
-      if(this.isDragging === 1){
+      if(this.isDragging === CONSTANTS.SOURCE){
         this.source = [row, column]
       }
-      else if(this.isDragging === 2){
+      else if(this.isDragging === CONSTANTS.TARGET){
         this.target = [row, column];
       }
       else alert("Errorrrr");
-      this.isDragging = 0;
+      this.isDragging = null;
     }
     else{
-      this.setState({cells: this.updateIndices([[row, column]], [3], this.state.cells)});
+      this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.WALL], this.state.cells)});
     }
   }
   setAlgorithm(algorithm){
@@ -191,44 +202,44 @@ export default class Board extends React.Component{
     this.frames = null;
     this.animator.stop();
     this.setState({
-      cells : this.state.cells.map(row => row.map(cell => (cell === 1 || cell === 2) ? cell : 0))
+      cells : this.state.cells.map(row => row.map(cell => (cell === CONSTANTS.SOURCE || cell === CONSTANTS.TARGET) ? cell : CONSTANTS.NORMAL))
       });
   }
   clickIconCell(row, column, id){
     if(!this.isPlaying()){
-      this.setState({cells: this.updateIndices([[row, column]], [0], this.state.cells)});
+      this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.NORMAL], this.state.cells)});
       this.isDragging = id;
     }
   }
   CellFactory(id, row, column){
     switch(id){
-      case 0 : return <NormalCell 
-                        key = {[row, column]} 
-                        color='white' 
-                        onMouseMove = {() => this.frames === null && this.isMouseDown && this.setState({cells: this.updateIndices([[row, column]], [3], this.state.cells)})}
-                        onClick = {() =>this.frames === null && this.clickNormalCell(row, column)}
-                        />; /*Normal Cell*/
+      case CONSTANTS.NORMAL : return <NormalCell 
+                                        key = {[row, column]} 
+                                        color='white' 
+                                        onMouseMove = {() => this.frames === null && this.isMouseDown && this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.WALL], this.state.cells)})}
+                                        onClick = {() =>this.frames === null && this.clickNormalCell(row, column)}
+                                        />; /*Normal Cell*/
 
-      case 1 : return <IconCell 
-                        key = {[row, column]} 
-                        image = {Source} 
-                        draggable={false}
-                        onClick = {() => this.clickIconCell(row, column, id)}
-                        />
+      case CONSTANTS.SOURCE : return <IconCell 
+                                        key = {[row, column]} 
+                                        image = {Source} 
+                                        draggable={false}
+                                        onClick = {() => this.clickIconCell(row, column, id)}
+                                        />
  
-      case 2 : return <IconCell 
-                        key = {[row, column]} 
-                        image = {Target} 
-                        draggable={false}
-                        onClick = {() => this.clickIconCell(row, column, id)}
-                        />
+      case CONSTANTS.TARGET : return <IconCell 
+                                        key = {[row, column]} 
+                                        image = {Target} 
+                                        draggable={false}
+                                        onClick = {() => this.clickIconCell(row, column, id)}
+                                        />
 
-      case 3 : return <Wall key = {[row, column]} 
-                        onClick = {() => this.frames === null && this.setState({cells: this.updateIndices([[row, column]], [0], this.state.cells)})}
-                        />; /* Wall */
-      case 4 : return <Path key = {[row, column]}/>; /* Path */
+      case CONSTANTS.WALL : return <Wall key = {[row, column]} 
+                                      onClick = {() => this.frames === null && this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.NORMAL], this.state.cells)})}
+                                      />; /* Wall */
+      case CONSTANTS.PATH : return <Path key = {[row, column]}/>; /* Path */
  
-      case 5 : return <VisitedCell key = {[row, column]}/>; /* Visisted cell */
+      case CONSTANTS.VISITED : return <VisitedCell key = {[row, column]}/>; /* Visisted cell */
  
       default : return null;
     }
