@@ -1,6 +1,6 @@
 import React from "react";
 import styled, { createGlobalStyle, keyframes } from "styled-components";
-import RightArrow from '../../Assets/RightArrow.svg';
+import Source from '../../Assets/Source.svg';
 import Target from '../../Assets/Target.svg';
 import Animator from "../../Animator";
 import djikstra from "../../Algorithms/Djikstra";
@@ -37,13 +37,14 @@ const Grid = styled.div`
 const GridCell = styled.div`
   aspect-ratio : 1;
   border : 1px solid #e7e7e7;
+
 `;
 
 const IconCell = styled(GridCell)`
   animation: ${creation} 0.5s forwards;
   background-size: cover;
   background-image:url(${props => props.image});
-  background-color : white;
+  background-color : #666bcb;
   user-select:none;
 `;
 const VisitedCell = styled(GridCell)`
@@ -130,10 +131,10 @@ export default class Board extends React.Component{
   makeBoard(rows, columns){
     const board = Array.from({length: rows},()=> Array.from({length: columns}, () => 0));
     this.source[0] = getRandomInt(0, rows);
-    this.source[1] = getRandomInt(0, columns);
+    this.source[1] = getRandomInt(0, columns / 2);
     do{
       this.target[0] = getRandomInt(0, rows);
-      this.target[1] = getRandomInt(0, columns);
+      this.target[1] = getRandomInt(columns / 2 + 1, columns);
     }
     while(this.target[0] === this.source[0] && this.target[1] === this.source[1]);
     board[this.source[0]][this.source[1]] = 1;
@@ -173,6 +174,9 @@ export default class Board extends React.Component{
   setAlgorithm(algorithm){
     this.choice = algorithm;
   }
+  getAlgorithm(){
+    return this.choice;
+  }
   start(){
     if(this.frames === null)
     {
@@ -207,7 +211,7 @@ export default class Board extends React.Component{
 
       case 1 : return <IconCell 
                         key = {[row, column]} 
-                        image = {RightArrow} 
+                        image = {Source} 
                         draggable={false}
                         onClick = {() => this.clickIconCell(row, column, id)}
                         />

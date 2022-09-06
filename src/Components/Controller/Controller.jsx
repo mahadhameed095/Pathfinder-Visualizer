@@ -36,7 +36,7 @@ const actionIcons =
 ]
 export default function Controller({theme, algorithms, actions}) {
   const [open, setopen] = React.useState(false);
-
+  const [choice, setchoice] = React.useState("Djikstra")
   console.log(actions);
   return (
     <>
@@ -54,6 +54,9 @@ export default function Controller({theme, algorithms, actions}) {
               <Typography color='textSecondary' textAlign='initial'>Creator</Typography>
             </Box>
           </Paper>
+          <Box>
+            <Typography textAlign = 'center' color='textSecondary' fontWeight='bold'>{"Algorithm : " + choice}</Typography>
+          </Box>
           <Box 
             >
             <Typography textAlign = 'center' color='textSecondary' fontWeight='bold'>Choose an algorithm!</Typography>
@@ -69,6 +72,7 @@ export default function Controller({theme, algorithms, actions}) {
                                     variant="contained" 
                                     sx={{my: 3, px:4, py: 2, borderRadius : 4, color : 'white', fontWeight : 'bold', bgcolor : colors[index]}} 
                                     key={key}
+                                    onClick = {() => { algorithms[key]() ; setchoice(key)}}
                                     >
                                     {key}
                                   </Button>)
