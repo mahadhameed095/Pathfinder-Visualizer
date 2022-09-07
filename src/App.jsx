@@ -2,6 +2,7 @@ import React from 'react'
 import { Controller, Board } from './Components'
 import { Box, AppBar, Toolbar } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { createGlobalStyle } from 'styled-components';
 
 const theme = createTheme({
    typography: {
@@ -20,6 +21,14 @@ const theme = createTheme({
    }
 });
 
+const GlobalStyle = createGlobalStyle`
+  body {
+    margin : 0;
+    padding : 0;
+    box-sizing : border-box;
+    overflow : hidden;
+  }
+`;
 
 
 export default function App() {
@@ -36,6 +45,7 @@ export default function App() {
     }
     return (
         <ThemeProvider theme={theme}>
+            <GlobalStyle/>
             {/* <AppBar position = 'static'>
                 <Toolbar>
                         

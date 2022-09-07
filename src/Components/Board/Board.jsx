@@ -1,81 +1,10 @@
 import React from "react";
-import styled, { createGlobalStyle, keyframes } from "styled-components";
 import Source from '../../Assets/Source.svg';
 import Target from '../../Assets/Target.svg';
 import Animator from "../../Animator";
 import djikstra from "../../Algorithms/Djikstra";
 import * as CONSTANTS from "../../constants";
-const GlobalStyle = createGlobalStyle`
-  body {
-    margin : 0;
-    padding : 0;
-    box-sizing : border-box;
-    overflow : hidden;
-  }
-`;
-
-const creation = keyframes`
-  from {
-    transform : scale(0.1);
-    border-radius : 50%;
-  }
-
-  to {
-    transform : scale(1.0);
-    border-radius : 0%;
-  }
-`;
-const visited_creation = keyframes`
-  from {
-    transform : scale(0.1);
-    border-radius : 50%;
-    background-color : #666bcb;
-  }
-
-  to {
-    transform : scale(1.0);
-    border-radius : 0%;
-    background-color : #4ae7aa;
-  }
-`;
-
-const Grid = styled.div`
-  background-color : #e9e9e9;
-  display: grid;
-  grid-template-columns: repeat(${ props => props.n }, 1fr);
-  grid-gap : 1px;
-  flex-grow : 1;
-  height : 100%;
-`;
-const GridCell = styled.div`
-  aspect-ratio : 1;
-  border : 1px solid #e7e7e7;
-
-`;
-
-const IconCell = styled(GridCell)`
-  animation: ${creation} 0.5s forwards;
-  background-size: cover;
-  background-image:url(${props => props.image});
-  background-color : #666bcb;
-  user-select:none;
-`;
-const VisitedCell = styled(GridCell)`
-  animation: ${visited_creation} 2s forwards;
-  background-color : hsl(200, 70%, 60%);
-`;
-const NormalCell = styled(GridCell)`
-  background-color: ${props => props.color};
-`;
-
-const Wall = styled(GridCell)`
-  animation: ${creation} 0.5s forwards;
-  background-color : gray;
-`;
-const Path = styled(GridCell)`
-  animation: ${creation} 0.5s forwards;
-  background-color : #f15757;
-`;
+import { Grid, IconCell, VisitedCell, NormalCell, Wall, Path } from './Styles'
 
 function getRandomInt(min, max) {
   min = Math.ceil(min);
@@ -92,7 +21,7 @@ export default class Board extends React.Component{
     this.grid = React.createRef();
     this.frames = null;
     this.isMouseDown = false;
-    this.isDragging = 0;
+    this.isDragging = null;
     this.algorithmChoice = "djikstra";
     this.algorithms = {
       "djikstra" : () => djikstra(this.state.cells, this.source, this.target),
@@ -114,7 +43,7 @@ export default class Board extends React.Component{
       if(nextFrame.done){
         if(nextFrame.value.value === null) alert("No pathh!!!");
         animatorRef.stop();
-        this.frames = null;
+        // this.frames = null;
         return;
       } 
       
@@ -175,7 +104,7 @@ export default class Board extends React.Component{
       else if(this.isDragging === CONSTANTS.TARGET){
         this.target = [row, column];
       }
-      else alert("Errorrrr");
+      else alert("isDragging : " + toString(this.isDragging));
       this.isDragging = null;
     }
     else{
@@ -247,7 +176,6 @@ export default class Board extends React.Component{
   render(){
     return(
     <React.Fragment>
-      <GlobalStyle/>
         <Grid ref={this.grid} n={this.state.cells[0].length} 
               onMouseDown = {() => this.isMouseDown = true} 
               onMouseUp = {() => this.isMouseDown = false}>

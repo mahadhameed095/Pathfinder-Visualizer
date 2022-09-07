@@ -37,7 +37,6 @@ const actionIcons =
 export default function Controller({theme, algorithms, actions}) {
   const [open, setopen] = React.useState(false);
   const [choice, setchoice] = React.useState("Djikstra")
-  console.log(actions);
   return (
     <>
       <Drawer
@@ -114,6 +113,7 @@ export default function Controller({theme, algorithms, actions}) {
             Object.keys(actions).map(
               (key, index) => <CustomIconButton
                                 sx = {{my : 4}} 
+                                key = {index}
                                 onClick = {actions[key]}>
                                   {
                                     actionIcons[index]

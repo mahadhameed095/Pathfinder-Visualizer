@@ -1,4 +1,3 @@
-import * as CONSTANTS from '../constants'
 const Neighbours = (key, num_rows, num_cols) => {
   const [i, j] = key;
   if((i < 0 || i >= num_rows ) || (j < 0 || j >= num_cols ))
@@ -53,13 +52,7 @@ export default function* djikstra(board, source, target){
     if(U[0] === target[0] && U[1] === target[1]) break;
     const neighbours = Neighbours(U, m, n);
     neighbours.map( V => {
-      if(board[V[0]][V[1]] === CONSTANTS.WALL){  /* 3 means its a wall */
-        return V;
-      }
-      if(nodes[V].visited)
-      {
-        return V;
-      } 
+      if(board[V[0]][V[1]] === 0 || nodes[V].visited) return V;
       queue.push(V);
       nodes[V].visited = true;
       const tempDistance = nodes[U].distance + 1;
