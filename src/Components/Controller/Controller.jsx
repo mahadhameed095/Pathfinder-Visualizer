@@ -95,10 +95,12 @@ export default function Controller({theme, algorithms, actions}) {
         display = "flex"
         flexDirection = "column"
         width = "100px"
+        alignItems = "center"
+        justifyContent="space-around"
+        overflow="auto"
         >
         
         <CustomIconButton 
-          sx={{mx:"auto", mt: 2}}
           onClick = {()=>setopen(true)}
           >
           <MenuOpenIcon fontSize = 'large'  sx={{color:'darkgray'}}/>
@@ -107,12 +109,13 @@ export default function Controller({theme, algorithms, actions}) {
           display="flex"
           flexDirection='column'
           alignItems='center'
-          my='auto'
+          height="80%"
+          justifyContent="space-evenly"
+          minHeight="300px"
         >
           {
             Object.keys(actions).map(
               (key, index) => <CustomIconButton
-                                sx = {{my : 4}} 
                                 key = {index}
                                 onClick = {actions[key]}>
                                   {
@@ -125,6 +128,3 @@ export default function Controller({theme, algorithms, actions}) {
     </>
   )
 }
-
-
-/* The green #4ae7aa . Consider transitions between the green and the blue. */

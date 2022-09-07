@@ -29,6 +29,7 @@ export default class Board extends React.Component{
     }
     
     this.resizeGrid = () => {
+      this.clear();
       const containerWidth = this.grid.current.offsetWidth;
       const containerHeight = this.grid.current.offsetHeight;
       const cols = Math.floor((containerWidth * 29)/1200);
