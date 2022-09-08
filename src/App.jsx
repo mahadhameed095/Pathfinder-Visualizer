@@ -40,7 +40,7 @@ export default function App() {
     }
     const algorithms = {
         "Djikstra" : () => board.current?.setAlgorithm("djikstra"),
-        "A* Search" : () => board.current?.setAlgorithm("djikstra"),
+        "A* Search" : () => board.current?.setAlgorithm("astar"),
         "Swarm" : () => board.current?.setAlgorithm("djikstra")
     }
     return (

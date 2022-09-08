@@ -1,9 +1,10 @@
 import React from "react";
 import Source from '../../Assets/Source.svg';
 import Target from '../../Assets/Target.svg';
-import Animator from "../../Animator";
+import Animator from "../../Utility/Animator";
 import djikstra from "../../Algorithms/Djikstra";
-import * as CONSTANTS from "../../constants";
+import astar from "../../Algorithms/Astar";
+import * as CONSTANTS from "../../Utility/constants";
 import { Grid, IconCell, VisitedCell, NormalCell, Wall, Path } from './Styles'
 
 function getRandomInt(min, max) {
@@ -25,7 +26,7 @@ export default class Board extends React.Component{
     this.algorithmChoice = "djikstra";
     this.algorithms = {
       "djikstra" : () => djikstra(this.state.cells, this.source, this.target),
-      "A* Search" : () => null
+      "astar" : () => astar(this.state.cells, this.source, this.target)
     }
     
     this.resizeGrid = () => {
@@ -42,9 +43,8 @@ export default class Board extends React.Component{
       const nextFrame = this.frames.next();
       let board;
       if(nextFrame.done){
-        if(nextFrame.value.value === null) alert("No pathh!!!");
         animatorRef.stop();
-        // this.frames = null;
+        if(nextFrame.value === null) alert("No pathh!!!");
         return;
       } 
       
@@ -113,10 +113,10 @@ export default class Board extends React.Component{
     }
   }
   setAlgorithm(algorithm){
-    this.choice = algorithm;
+    this.algorithmChoice = algorithm;
   }
   getAlgorithm(){
-    return this.choice;
+    return this.algorithmChoice;
   }
   start(){
     if(this.frames === null)

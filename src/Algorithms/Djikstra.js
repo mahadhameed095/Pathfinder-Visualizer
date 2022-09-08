@@ -1,37 +1,4 @@
-const Neighbours = (key, num_rows, num_cols) => {
-  const [i, j] = key;
-  if((i < 0 || i >= num_rows ) || (j < 0 || j >= num_cols ))
-  {
-    console.log("Out of Bounds access : ", i, j);
-    return [];
-  } 
-  const neighbours = [];
-  if(i - 1 >= 0){
-    neighbours.push([i - 1, j])
-  }
-  if(j + 1 < num_cols){
-    neighbours.push([i, j + 1])
-  }
-  if(i + 1 < num_rows){
-    neighbours.push([i + 1, j])
-  }
-  if(j - 1 >= 0){
-    neighbours.push([i, j - 1])
-  }
-  // if((i - 1 >= 0) && (j - 1 >= 0)){
-  //   neighbours.push([i - 1, j - 1])
-  // }
-  // if((i - 1 >= 0) && (j + 1 < num_cols)){
-  //   neighbours.push([i - 1, j + 1])
-  // }
-  // if((i + 1 < num_rows) && (j + 1 < num_cols)){
-  //   neighbours.push([i + 1, j + 1])
-  // }
-  // if((i + 1 < num_rows) && (j - 1 >= 0)){
-  //   neighbours.push([i + 1, j - 1])
-  // }
-  return neighbours;
-}
+import { neighbours } from "../Utility/neighbours";
 
 export default function* djikstra(board, source, target){
   const nodes = {};
@@ -50,8 +17,8 @@ export default function* djikstra(board, source, target){
   while(queue.length > 0){
     const U = queue.shift();
     if(U[0] === target[0] && U[1] === target[1]) break;
-    const neighbours = Neighbours(U, m, n);
-    neighbours.map( V => {
+    const neighboursList = neighbours(U, m, n);
+    neighboursList.map( V => {
       if(board[V[0]][V[1]] === 0 || nodes[V].visited) return V;
       queue.push(V);
       nodes[V].visited = true;
@@ -67,7 +34,7 @@ export default function* djikstra(board, source, target){
   let index = target;
   while(true){
     index = previous[index];
-    if(index === null) return { type : "path", value : null};
+    if(index === null) return null;
     if (index === source) break;
     path.push(index);
     yield { type : "path", value : index};
