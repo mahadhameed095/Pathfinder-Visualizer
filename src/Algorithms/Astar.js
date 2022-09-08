@@ -1,9 +1,9 @@
 import { neighbours } from "../Utility/neighbours";
 import PriorityQueue from "../Utility/PriorityQueue";
-import { euclideanDistance } from "../Utility/distance";
+import { manhattanDistance } from "../Utility/distance";
 
 
-/* euclideanDistance is being used as the heuristic value */
+/* manhattanDistance is being used as the heuristic value */
 export default function* astar(board, source, target){
     const queue = new PriorityQueue((a, b) => a[2] < b[2]);
     const [m, n] = [board.length, board[0].length];
@@ -24,14 +24,14 @@ export default function* astar(board, source, target){
             break;
         } 
         const neigboursList = neighbours(U, m, n);
-        neigboursList.map( V => {
-            if(board[V[0]][V[1]] === 0 || nodes[V].visited) return V;
+        for(let i = 0 ; i < neigboursList.length ; i++){
+            const V = neigboursList[i];
+            if(board[V[0]][V[1]] === 0 || nodes[V].visited) continue;
             else{
-                queue.push([V, [...path, V], path.length + euclideanDistance(V, U)]);
+                queue.push([V, [...path, V], path.length + manhattanDistance(target, V)]);
                 nodes[V].visited = true;
-                return V;
             }
-        });
+        }
         yield {type : "visited", value : nodes};
     }
     if(resultant.length == 0) return null;
