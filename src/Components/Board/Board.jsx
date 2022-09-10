@@ -5,6 +5,7 @@ import Animator from "../../Utility/Animator";
 import djikstra from "../../Algorithms/Djikstra";
 import astar from "../../Algorithms/Astar";
 import * as CONSTANTS from "../../Utility/constants";
+import recurDiv  from "../../Algorithms/RecursiveDivision";
 import { Grid, IconCell, VisitedCell, NormalCell, Wall, Path } from './Styles'
 
 function getRandomInt(min, max) {
@@ -93,25 +94,6 @@ export default class Board extends React.Component{
     }
     return board;
   }
-
-  clickNormalCell(row, column){
-    if(this.isDragging !== null)
-    {
-      this.setState({cells: this.updateIndices([[row, column]], [this.isDragging], this.state.cells)});
-      
-      if(this.isDragging === CONSTANTS.SOURCE){
-        this.source = [row, column]
-      }
-      else if(this.isDragging === CONSTANTS.TARGET){
-        this.target = [row, column];
-      }
-      else alert("isDragging : " + toString(this.isDragging));
-      this.isDragging = null;
-    }
-    else{
-      this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.WALL], this.state.cells)});
-    }
-  }
   setAlgorithm(algorithm){
     this.algorithmChoice = algorithm;
   }
@@ -119,6 +101,12 @@ export default class Board extends React.Component{
     return this.algorithmChoice;
   }
   start(){
+    // const board = recurDiv(this.state.cells.length, this.state.cells[0].length);
+    // board[this.source[0]][this.source[1]] = CONSTANTS.SOURCE;
+    // board[this.target[0]][this.target[1]] = CONSTANTS.TARGET;
+    // this.setState({
+    //   cells : board
+    // })
     if(this.frames === null)
     {
       this.frames = this.algorithms[this.algorithmChoice]();
@@ -141,31 +129,66 @@ export default class Board extends React.Component{
       this.isDragging = id;
     }
   }
+  isInteractable(){
+    return this.frames === null;
+  }
+  normalAndWallDrag(row, column, val){
+    if(this.isInteractable() && this.isMouseDown){
+      if(this.isDragging !== null){
+        const board = [...this.state.cells];
+        const endRef = this.isDragging === CONSTANTS.SOURCE ? this.source : this.target;
+        board[endRef[0]][endRef[1]] = CONSTANTS.NORMAL;
+        endRef[0] = row ; endRef[1] = column;
+        board[endRef[0]][endRef[1]] = this.isDragging;
+        this.setState({ cells : board });
+      }
+      else{
+        this.setState({ cells : this.updateIndices([[row, column]], [val === 0 ? 1 : 0], this.state.cells) });
+      }
+    }
+  }
+  normalAndWallClick(row, column, val){
+    if(this.isInteractable()){
+      if(this.isDragging !== null){
+        const board = [...this.state.cells];
+        const endRef = this.isDragging === CONSTANTS.SOURCE ? this.source : this.target;
+        board[endRef[0]][endRef[1]] = CONSTANTS.NORMAL;
+        endRef[0] = row ; endRef[1] = column;
+        board[endRef[0]][endRef[1]] = this.isDragging;
+        this.setState({ cells : board }, () => this.isDragging = null);
+      }
+      else{
+        this.setState({ cells : this.updateIndices([[row, column]], [val === 0 ? 1 : 0], this.state.cells) });
+      }
+    }
+  }
   CellFactory(id, row, column){
     switch(id){
       case CONSTANTS.NORMAL : return <NormalCell 
                                         key = {[row, column]} 
-                                        color='white' 
-                                        onMouseMove = {() => this.frames === null && this.isMouseDown && this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.WALL], this.state.cells)})}
-                                        onClick = {() =>this.frames === null && this.clickNormalCell(row, column)}
+                                        onMouseMove = {() => this.normalAndWallDrag(row, column, CONSTANTS.NORMAL)}
+                                        onClick = {() => this.normalAndWallClick(row, column, CONSTANTS.NORMAL)}
                                         />; /*Normal Cell*/
 
       case CONSTANTS.SOURCE : return <IconCell 
                                         key = {[row, column]} 
                                         image = {Source} 
                                         draggable={false}
-                                        onClick = {() => this.clickIconCell(row, column, id)}
+                                        onMouseMove = {() => this.isMouseDown && (this.isDragging = CONSTANTS.SOURCE)}
+                                        onClick = {() => this.clickIconCell(row, column, CONSTANTS.SOURCE)}
                                         />
  
       case CONSTANTS.TARGET : return <IconCell 
                                         key = {[row, column]} 
                                         image = {Target} 
                                         draggable={false}
-                                        onClick = {() => this.clickIconCell(row, column, id)}
+                                        onMouseMove = {() => this.isMouseDown && (this.isDragging = CONSTANTS.TARGET)}
+                                        onClick = {() => this.clickIconCell(row, column, CONSTANTS.TARGET)}
                                         />
 
       case CONSTANTS.WALL : return <Wall key = {[row, column]} 
-                                      onClick = {() => this.frames === null && this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.NORMAL], this.state.cells)})}
+                                        onMouseMove = {() => this.normalAndWallDrag(row, column, this.state.cells[row][column])}
+                                        onClick = {() => this.normalAndWallClick(row, column, CONSTANTS.WALL)}
                                       />; /* Wall */
       case CONSTANTS.PATH : return <Path key = {[row, column]}/>; /* Path */
  
@@ -179,7 +202,8 @@ export default class Board extends React.Component{
     <React.Fragment>
         <Grid ref={this.grid} n={this.state.cells[0].length} 
               onMouseDown = {() => this.isMouseDown = true} 
-              onMouseUp = {() => this.isMouseDown = false}>
+              onMouseUp = {() => { this.isMouseDown = false;}}
+            >
           {
             this.state.cells && this.state.cells.map((item, row) => item.map((subItem, column) => this.CellFactory(subItem, row, column)))
           }

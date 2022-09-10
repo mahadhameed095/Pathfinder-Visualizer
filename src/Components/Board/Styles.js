@@ -25,17 +25,16 @@ const visited_creation = keyframes`
 `;
 
 const Grid = styled.div`
-  background-color : #e9e9e9;
   display: grid;
   grid-template-columns: repeat(${ props => props.n }, 1fr);
-  grid-gap : 1px;
   flex-grow : 1;
+  // grid-gap : 1px;
+  background-color : #e7e7e7;
   height : 100%;
 `;
 const GridCell = styled.div`
   aspect-ratio : 1;
   border : 1px solid #e7e7e7;
-
 `;
 
 const IconCell = styled(GridCell)`
@@ -50,7 +49,7 @@ const VisitedCell = styled(GridCell)`
   background-color : hsl(200, 70%, 60%);
 `;
 const NormalCell = styled(GridCell)`
-  background-color: ${props => props.color};
+  background-color: white;
 `;
 
 const Wall = styled(GridCell)`
