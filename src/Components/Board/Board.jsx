@@ -24,6 +24,7 @@ export default class Board extends React.Component{
     this.frames = null;
     this.isMouseDown = false;
     this.isDragging = null;
+    this.isClicked = null;
     this.algorithmChoice = "djikstra";
     this.algorithms = {
       "djikstra" : () => djikstra(this.state.cells, this.source, this.target),
@@ -67,9 +68,14 @@ export default class Board extends React.Component{
   componentWillUnmount(){
     window.removeEventListener('resize', this.resizeGrid);
   }
-
+  canPlay(){
+    return this.isClicked === null;
+  }
   isPlaying(){
     return this.animator.playing;
+  }
+  isInteractable(){
+    return this.frames === null;
   }
   makeBoard(rows, columns){
     
@@ -107,7 +113,7 @@ export default class Board extends React.Component{
     // this.setState({
     //   cells : board
     // })
-    if(this.frames === null)
+    if(this.frames === null && this.canPlay())
     {
       this.frames = this.algorithms[this.algorithmChoice]();
     }
@@ -126,11 +132,8 @@ export default class Board extends React.Component{
   clickIconCell(row, column, id){
     if(!this.isPlaying()){
       this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.NORMAL], this.state.cells)});
-      this.isDragging = id;
+      this.isClicked = id;
     }
-  }
-  isInteractable(){
-    return this.frames === null;
   }
   normalAndWallDrag(row, column, val){
     if(this.isInteractable() && this.isMouseDown){
@@ -149,13 +152,13 @@ export default class Board extends React.Component{
   }
   normalAndWallClick(row, column, val){
     if(this.isInteractable()){
-      if(this.isDragging !== null){
+      if(this.isClicked !== null){
         const board = [...this.state.cells];
-        const endRef = this.isDragging === CONSTANTS.SOURCE ? this.source : this.target;
+        const endRef = this.isClicked === CONSTANTS.SOURCE ? this.source : this.target;
         board[endRef[0]][endRef[1]] = CONSTANTS.NORMAL;
         endRef[0] = row ; endRef[1] = column;
-        board[endRef[0]][endRef[1]] = this.isDragging;
-        this.setState({ cells : board }, () => this.isDragging = null);
+        board[endRef[0]][endRef[1]] = this.isClicked;
+        this.setState({ cells : board }, () => this.isClicked = null);
       }
       else{
         this.setState({ cells : this.updateIndices([[row, column]], [val === 0 ? 1 : 0], this.state.cells) });
@@ -202,7 +205,7 @@ export default class Board extends React.Component{
     <React.Fragment>
         <Grid ref={this.grid} n={this.state.cells[0].length} 
               onMouseDown = {() => this.isMouseDown = true} 
-              onMouseUp = {() => { this.isMouseDown = false;}}
+              onMouseUp = {() => { this.isMouseDown = false; this.isDragging = null;}}
             >
           {
             this.state.cells && this.state.cells.map((item, row) => item.map((subItem, column) => this.CellFactory(subItem, row, column)))
