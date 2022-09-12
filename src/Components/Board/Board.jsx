@@ -2,8 +2,8 @@ import React from "react";
 import Source from '../../Assets/Source.svg';
 import Target from '../../Assets/Target.svg';
 import Animator from "../../Utility/Animator";
-import djikstra from "../../Algorithms/Djikstra";
-import astar from "../../Algorithms/Astar";
+import { djikstraGen, djikstra} from "../../Algorithms/Djikstra";
+import { astarGen, astar} from "../../Algorithms/Astar";
 import * as CONSTANTS from "../../Utility/constants";
 import recurDiv  from "../../Algorithms/RecursiveDivision";
 import { Grid, IconCell, VisitedCell, NormalCell, Wall, Path } from './Styles'
@@ -22,13 +22,13 @@ export default class Board extends React.Component{
     this.state = {cells : this.makeBoard(15, 29)};
     this.grid = React.createRef();
     this.frames = null;
+    this.done = false;
     this.isMouseDown = false;
     this.isDragging = null;
-    this.isClicked = null;
     this.algorithmChoice = "djikstra";
     this.algorithms = {
-      "djikstra" : () => djikstra(this.state.cells, this.source, this.target),
-      "astar" : () => astar(this.state.cells, this.source, this.target)
+      "djikstra" : [() => djikstraGen(this.state.cells, this.source, this.target),() => djikstra(this.state.cells, this.source, this.target)],
+      "astar" : [ () => astarGen(this.state.cells, this.source, this.target), () => astar(this.state.cells, this.source, this.target)]
     }
     
     this.resizeGrid = () => {
@@ -46,6 +46,8 @@ export default class Board extends React.Component{
       let board;
       if(nextFrame.done){
         animatorRef.stop();
+        this.frames = null;
+        this.done = true;
         if(nextFrame.value === null) alert("No pathh!!!");
         return;
       } 
@@ -54,7 +56,7 @@ export default class Board extends React.Component{
         board = this.state.cells.map((row, i) => row.map((item, j) => nextFrame.value.value[[i, j]].visited && item === CONSTANTS.NORMAL ? CONSTANTS.VISITED : item))
       }
       else if(nextFrame.value.type === "path"){
-        board = this.updateIndices([nextFrame.value.value], [CONSTANTS.PATH], this.state.cells);
+        board = this.updateIndices([...nextFrame.value.value], [CONSTANTS.PATH], this.state.cells);
       }
       this.setState({cells:board});
       this.forceUpdate();
@@ -69,7 +71,7 @@ export default class Board extends React.Component{
     window.removeEventListener('resize', this.resizeGrid);
   }
   canPlay(){
-    return this.isClicked === null;
+    return this.isDragging === null;
   }
   isPlaying(){
     return this.animator.playing;
@@ -115,7 +117,12 @@ export default class Board extends React.Component{
     // })
     if(this.frames === null && this.canPlay())
     {
-      this.frames = this.algorithms[this.algorithmChoice]();
+      this.done = false;
+      this.frames = this.algorithms[this.algorithmChoice][0]();
+      this.setState({
+        cells : this.state.cells.map(row => row.map( cell => cell === CONSTANTS.VISITED || 
+                                                             cell === CONSTANTS.PATH ? CONSTANTS.NORMAL : cell))
+      })
     }
     this.animator.start();
   }
@@ -129,12 +136,12 @@ export default class Board extends React.Component{
       cells : this.state.cells.map(row => row.map(cell => (cell === CONSTANTS.SOURCE || cell === CONSTANTS.TARGET) ? cell : CONSTANTS.NORMAL))
       });
   }
-  clickIconCell(row, column, id){
-    if(!this.isPlaying()){
-      this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.NORMAL], this.state.cells)});
-      this.isClicked = id;
-    }
-  }
+  // clickIconCell(row, column, id){
+  //   if(!this.isPlaying()){
+  //     this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.NORMAL], this.state.cells)});
+  //     this.isClicked = id;
+  //   }
+  // }
   normalAndWallDrag(row, column, val){
     if(this.isInteractable() && this.isMouseDown){
       if(this.isDragging !== null){
@@ -143,6 +150,15 @@ export default class Board extends React.Component{
         board[endRef[0]][endRef[1]] = CONSTANTS.NORMAL;
         endRef[0] = row ; endRef[1] = column;
         board[endRef[0]][endRef[1]] = this.isDragging;
+
+        if(this.done){
+          const results = this.algorithms[this.algorithmChoice][1]();
+          if(results !== null){
+            board.forEach((row, i) => row.map((item, j) => (item === CONSTANTS.PATH || item === CONSTANTS.VISITED) && (board[i][j] = CONSTANTS.NORMAL))); /* Clear board of previously visited cells and paths */
+            board.forEach((row, i) => row.map((item, j) => results.nodes[[i, j]].visited && board[i][j] === CONSTANTS.NORMAL &&  (board[i][j] = CONSTANTS.VISITED)));
+            results.path.forEach(index => board[index[0]][index[1]] = CONSTANTS.PATH);
+          }
+        }
         this.setState({ cells : board });
       }
       else{
@@ -152,17 +168,7 @@ export default class Board extends React.Component{
   }
   normalAndWallClick(row, column, val){
     if(this.isInteractable()){
-      if(this.isClicked !== null){
-        const board = [...this.state.cells];
-        const endRef = this.isClicked === CONSTANTS.SOURCE ? this.source : this.target;
-        board[endRef[0]][endRef[1]] = CONSTANTS.NORMAL;
-        endRef[0] = row ; endRef[1] = column;
-        board[endRef[0]][endRef[1]] = this.isClicked;
-        this.setState({ cells : board }, () => this.isClicked = null);
-      }
-      else{
-        this.setState({ cells : this.updateIndices([[row, column]], [val === 0 ? 1 : 0], this.state.cells) });
-      }
+      this.setState({ cells : this.updateIndices([[row, column]], [val === CONSTANTS.NORMAL ? CONSTANTS.WALL : CONSTANTS.NORMAL], this.state.cells) });
     }
   }
   CellFactory(id, row, column){
@@ -178,7 +184,6 @@ export default class Board extends React.Component{
                                         image = {Source} 
                                         draggable={false}
                                         onMouseMove = {() => this.isMouseDown && (this.isDragging = CONSTANTS.SOURCE)}
-                                        onClick = {() => this.clickIconCell(row, column, CONSTANTS.SOURCE)}
                                         />
  
       case CONSTANTS.TARGET : return <IconCell 
@@ -186,16 +191,26 @@ export default class Board extends React.Component{
                                         image = {Target} 
                                         draggable={false}
                                         onMouseMove = {() => this.isMouseDown && (this.isDragging = CONSTANTS.TARGET)}
-                                        onClick = {() => this.clickIconCell(row, column, CONSTANTS.TARGET)}
                                         />
 
-      case CONSTANTS.WALL : return <Wall key = {[row, column]} 
-                                        onMouseMove = {() => this.normalAndWallDrag(row, column, this.state.cells[row][column])}
+      case CONSTANTS.WALL : return <Wall  
+                                        key = {[row, column]} 
+                                        onMouseMove = {() => this.normalAndWallDrag(row, column, CONSTANTS.WALL)}
                                         onClick = {() => this.normalAndWallClick(row, column, CONSTANTS.WALL)}
                                       />; /* Wall */
-      case CONSTANTS.PATH : return <Path key = {[row, column]}/>; /* Path */
+      case CONSTANTS.PATH : return <Path 
+                                        key = {[row, column]}
+                                        onMouseMove = {() => this.normalAndWallDrag(row, column, CONSTANTS.PATH)}
+                                        onClick = {() => this.normalAndWallClick(row, column, CONSTANTS.PATH)}                                        
+                                        shouldAnimate = {!this.done}
+                                      />; /* Path */
  
-      case CONSTANTS.VISITED : return <VisitedCell key = {[row, column]}/>; /* Visisted cell */
+      case CONSTANTS.VISITED : return <VisitedCell 
+                                        key = {[row, column]}
+                                        onMouseMove = {() => this.normalAndWallDrag(row, column, CONSTANTS.VISITED)}
+                                        onClick = {() => this.normalAndWallClick(row, column, CONSTANTS.VISITED)}
+                                        shouldAnimate = {!this.done}
+                                      />; /* Visisted cell */
  
       default : return null;
     }

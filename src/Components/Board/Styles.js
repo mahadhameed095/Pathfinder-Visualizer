@@ -45,8 +45,8 @@ const IconCell = styled(GridCell)`
   user-select:none;
 `;
 const VisitedCell = styled(GridCell)`
-  animation: ${visited_creation} 2s forwards;
-  background-color : hsl(200, 70%, 60%);
+  animation: ${props => props.shouldAnimate ? visited_creation : 'none'} 2s forwards;
+  background-color : #4ae7aa;
 `;
 const NormalCell = styled(GridCell)`
   background-color: white;
@@ -57,7 +57,7 @@ const Wall = styled(GridCell)`
   background-color : gray;
 `;
 const Path = styled(GridCell)`
-  animation: ${creation} 0.5s forwards;
+  animation: ${props => props.shouldAnimate ? creation : 'none'} 0.5s forwards;
   background-color : #f15757;
 `;
 
