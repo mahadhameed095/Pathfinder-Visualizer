@@ -105,16 +105,7 @@ export default class Board extends React.Component{
   setAlgorithm(algorithm){
     this.algorithmChoice = algorithm;
   }
-  getAlgorithm(){
-    return this.algorithmChoice;
-  }
   start(){
-    // const board = recurDiv(this.state.cells.length, this.state.cells[0].length);
-    // board[this.source[0]][this.source[1]] = CONSTANTS.SOURCE;
-    // board[this.target[0]][this.target[1]] = CONSTANTS.TARGET;
-    // this.setState({
-    //   cells : board
-    // })
     if(this.frames === null && this.canPlay())
     {
       this.done = false;
@@ -136,39 +127,43 @@ export default class Board extends React.Component{
       cells : this.state.cells.map(row => row.map(cell => (cell === CONSTANTS.SOURCE || cell === CONSTANTS.TARGET) ? cell : CONSTANTS.NORMAL))
       });
   }
-  // clickIconCell(row, column, id){
-  //   if(!this.isPlaying()){
-  //     this.setState({cells: this.updateIndices([[row, column]], [CONSTANTS.NORMAL], this.state.cells)});
-  //     this.isClicked = id;
-  //   }
-  // }
+  redoWithoutAnimation(board){
+    const results = this.algorithms[this.algorithmChoice][1]();
+    if(results !== null){
+      board.forEach((row, i) => row.map((item, j) => (item === CONSTANTS.PATH || item === CONSTANTS.VISITED) && (board[i][j] = CONSTANTS.NORMAL))); /* Clear board of previously visited cells and paths */
+      board.forEach((row, i) => row.map((item, j) => results.nodes[[i, j]].visited && board[i][j] === CONSTANTS.NORMAL &&  (board[i][j] = CONSTANTS.VISITED)));
+      results.path.forEach(index => board[index[0]][index[1]] = CONSTANTS.PATH);
+      return board;
+    } else{
+      // alert("No path!");
+      return board;
+    }
+  }
+
   normalAndWallDrag(row, column, val){
     if(this.isInteractable() && this.isMouseDown){
+      let board = null;
+      
       if(this.isDragging !== null){
-        const board = [...this.state.cells];
         const endRef = this.isDragging === CONSTANTS.SOURCE ? this.source : this.target;
+        board = [...this.state.cells];
         board[endRef[0]][endRef[1]] = CONSTANTS.NORMAL;
         endRef[0] = row ; endRef[1] = column;
         board[endRef[0]][endRef[1]] = this.isDragging;
-
-        if(this.done){
-          const results = this.algorithms[this.algorithmChoice][1]();
-          if(results !== null){
-            board.forEach((row, i) => row.map((item, j) => (item === CONSTANTS.PATH || item === CONSTANTS.VISITED) && (board[i][j] = CONSTANTS.NORMAL))); /* Clear board of previously visited cells and paths */
-            board.forEach((row, i) => row.map((item, j) => results.nodes[[i, j]].visited && board[i][j] === CONSTANTS.NORMAL &&  (board[i][j] = CONSTANTS.VISITED)));
-            results.path.forEach(index => board[index[0]][index[1]] = CONSTANTS.PATH);
-          }
-        }
-        this.setState({ cells : board });
       }
+      
       else{
-        this.setState({ cells : this.updateIndices([[row, column]], [val === 0 ? 1 : 0], this.state.cells) });
+        board = this.updateIndices([[row, column]], [val === CONSTANTS.WALL ? CONSTANTS.NORMAL : CONSTANTS.WALL], this.state.cells);
       }
+      if(this.done) board = this.redoWithoutAnimation(board);
+      this.setState({ cells : board });
     }
   }
   normalAndWallClick(row, column, val){
     if(this.isInteractable()){
-      this.setState({ cells : this.updateIndices([[row, column]], [val === CONSTANTS.NORMAL ? CONSTANTS.WALL : CONSTANTS.NORMAL], this.state.cells) });
+      let board = this.updateIndices([[row, column]], [val === CONSTANTS.WALL ? CONSTANTS.NORMAL : CONSTANTS.WALL], this.state.cells);
+      if(this.done) board = this.redoWithoutAnimation(board);
+      this.setState({ cells : board });
     }
   }
   CellFactory(id, row, column){
