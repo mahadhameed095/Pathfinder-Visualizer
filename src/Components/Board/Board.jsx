@@ -7,7 +7,6 @@ import { djikstraGen, djikstra} from "../../Algorithms/Djikstra";
 import { astarGen, astar} from "../../Algorithms/Astar";
 import * as CONSTANTS from "../../Utility/constants";
 import { Grid, IconCell, VisitedCell, NormalCell, Wall, Path } from './Styles'
-
 export default class Board extends React.Component{
   constructor(){
     super();
@@ -16,6 +15,7 @@ export default class Board extends React.Component{
     this.state = {cells : this.__makeBoard(15, 29)}; /* Represents the state of the grid(mxn array) */
     this.grid = React.createRef(); /* The reference to the physical html div that represents the grid. It is used to fetch its dimensions */
     this.frames = null; /* Holds the current generator object */
+    this.maze_gen = null;
     this.done = false; /* A boolean that is set when the animation is done. and clears while animating */
     this.isMouseDown = false; 
     this.isDragging = null;
@@ -33,16 +33,77 @@ export default class Board extends React.Component{
     this.algorithmChoice = algorithm;
   }
   start(){
-    if(this.__isInteractable() && this.__canPlay())
-    {
-      this.done = false;
-      this.frames = this.algorithms[this.algorithmChoice][0]();
-      this.setState({
-        cells : this.state.cells.map(row => row.map( cell => cell === CONSTANTS.VISITED || 
-                                                             cell === CONSTANTS.PATH ? CONSTANTS.NORMAL : cell))
-      })
+    // if(this.__isInteractable() && this.__canPlay())
+    // {
+    //   this.done = false;
+    //   this.frames = this.algorithms[this.algorithmChoice][0]();
+    //   this.setState({
+    //     cells : this.state.cells.map(row => row.map( cell => cell === CONSTANTS.VISITED || 
+    //                                                          cell === CONSTANTS.PATH ? CONSTANTS.NORMAL : cell))
+    //   })
+    // }
+    // this.animator.start();
+    function* recursive_division(m, n){
+      const HORIZONTAL = 0;
+      const VERTICAL = 1;
+      const get_even_rand = (min, max) => {
+        let random;
+        do{
+          random = getRandomInt(min, max);
+        }while(random % 2 === 1);
+        return random;
+      }
+      const get_odd_rand = (min, max) => {
+        let random;
+        do{
+          random = getRandomInt(min, max);
+        }while(random % 2 === 0);
+        return random;
+      }
+
+      const get_orientation = (rows, columns) => {
+        if(rows > columns) return HORIZONTAL;
+        else if(rows < columns) return VERTICAL;
+        else return getRandomInt(0, 2) % 2 === 0 ? VERTICAL : HORIZONTAL;
+      }
+      const maze = Array.from({ length: m }, () => Array.from({ length: n }, () => 1));
+      const stack = [];
+      stack.push({ x : 0, y : 0, rows : maze.length, columns : maze[0].length });
+
+      while(stack.length !== 0){
+        const {x, y, rows, columns} = stack.pop();
+        if(rows > 1 && columns > 1){
+          const orientation = get_orientation(rows, columns);
+          if(orientation === HORIZONTAL){
+            const new_wall = get_even_rand(x, x + rows);
+            const new_hole = get_odd_rand(y, y + columns);
+            for (let i = y; i < y + columns; i++) {
+              maze[new_wall][i] = 0;
+            }
+            maze[new_wall][new_hole] = 1;
+            stack.push({ x : new_wall + 1, y : y, rows : x + rows - new_wall - 1, columns : columns });
+            stack.push({ x : x,            y : y, rows : new_wall - x,        columns : columns });
+            yield maze;
+          }
+          else{
+            const new_wall = get_even_rand(y, y + columns);
+            const new_hole = get_odd_rand(x, x + rows);
+            for (let i = x; i < x + rows; i++) {
+              maze[i][new_wall] = 0;
+            }
+            maze[new_hole][new_wall] = 1;
+            stack.push({ x : x, y : new_wall + 1, rows : rows, columns : y + columns - new_wall - 1 });
+            stack.push({ x : x, y : y,            rows : rows, columns : new_wall - y });
+            yield maze;
+         }
+        }
+      }
+      return maze;
     }
-    this.animator.start();
+    const [m, n] = [this.state.cells.length, this.state.cells[0].length];
+    if(this.maze_gen === null)
+      this.maze_gen = recursive_division(m, n);
+    this.setState({cells: this.maze_gen.next().value});
   }
   stop(){
     this.animator.stop();
@@ -159,46 +220,20 @@ export default class Board extends React.Component{
     }
   }
   __cellFactory(id, row, column){
+    const args ={ 
+                  key : [row, column],
+                  onMouseMove : (id === CONSTANTS.SOURCE || id === CONSTANTS.TARGET) 
+                                 ? () =>this.isMouseDown && (this.isDragging = id) /* For source and target cells */
+                                 :() => this.__cellDragged(row, column, id), /* For all other cells */
+                  onClick : () => this.__cellClicked(row, column, id)
+                };
     switch(id){
-      case CONSTANTS.NORMAL : return <NormalCell 
-                                        key = {[row, column]} 
-                                        onMouseMove = {() => this.__cellDragged(row, column, CONSTANTS.NORMAL)}
-                                        onClick = {() => this.__cellClicked(row, column, CONSTANTS.NORMAL)}
-                                        />; /*Normal Cell*/
-
-      case CONSTANTS.SOURCE : return <IconCell 
-                                        key = {[row, column]} 
-                                        image = {Source} 
-                                        draggable={false}
-                                        onMouseMove = {() => this.isMouseDown && (this.isDragging = CONSTANTS.SOURCE)}
-                                        />
- 
-      case CONSTANTS.TARGET : return <IconCell 
-                                        key = {[row, column]} 
-                                        image = {Target} 
-                                        draggable={false}
-                                        onMouseMove = {() => this.isMouseDown && (this.isDragging = CONSTANTS.TARGET)}
-                                        />
-
-      case CONSTANTS.WALL : return <Wall  
-                                        key = {[row, column]} 
-                                        onMouseMove = {() => this.__cellDragged(row, column, CONSTANTS.WALL)}
-                                        onClick = {() => this.__cellClicked(row, column, CONSTANTS.WALL)}
-                                      />; /* Wall */
-      case CONSTANTS.PATH : return <Path 
-                                        key = {[row, column]}
-                                        onMouseMove = {() => this.__cellDragged(row, column, CONSTANTS.PATH)}
-                                        onClick = {() => this.__cellClicked(row, column, CONSTANTS.PATH)}                                        
-                                        shouldAnimate = {!this.done}
-                                      />; /* Path */
- 
-      case CONSTANTS.VISITED : return <VisitedCell 
-                                        key = {[row, column]}
-                                        onMouseMove = {() => this.__cellDragged(row, column, CONSTANTS.VISITED)}
-                                        onClick = {() => this.__cellClicked(row, column, CONSTANTS.VISITED)}
-                                        shouldAnimate = {!this.done}
-                                      />; /* Visisted cell */
- 
+      case CONSTANTS.NORMAL : return <NormalCell {...args}/>; /*Normal Cell*/
+      case CONSTANTS.SOURCE : return <IconCell key= {args["key"]} onMouseMove = {args["onMouseMove"]} image = {Source}/> /* Source node */
+      case CONSTANTS.TARGET : return <IconCell key= {args["key"]} onMouseMove = {args["onMouseMove"]} image = {Target}/> /* Target node */
+      case CONSTANTS.WALL : return <Wall {...args}/>; /* Wall */
+      case CONSTANTS.PATH : return <Path {...args} shouldAnimate = {!this.done}/>; /* Path */
+      case CONSTANTS.VISITED : return <VisitedCell {...args} shouldAnimate = {!this.done}/>; /* Visisted cell */
       default : return null;
     }
   }

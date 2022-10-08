@@ -1,6 +1,6 @@
 import React from 'react'
 import { Controller, Board } from './Components'
-import { Box, AppBar, Toolbar } from '@mui/material';
+import { Box } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { createGlobalStyle } from 'styled-components';
 
@@ -46,29 +46,10 @@ export default function App() {
     return (
         <ThemeProvider theme={theme}>
             <GlobalStyle/>
-            {/* <AppBar position = 'static'>
-                <Toolbar>
-                        
-                </Toolbar>
-            </AppBar> */}
             <Box display='flex' width='100vw' height='100vh'>
                 <Controller actions = {actions} algorithms = {algorithms}/>
                 <Board ref={board}/>
             </Box>
         </ThemeProvider>
-        // <ThemeProvider theme={theme}>
-        //     <Box display='flex' width='100vw' height='100vh'>
-        //         <Controller actions = {actions} algorithms = {algorithms}/>
-        //         <Box width = '100%' height = '100%'>
-        //             <AppBar position = 'static'>
-        //                 <Toolbar>
-                                
-        //                 </Toolbar>
-        //             </AppBar>
-        //             <Board ref={board}/>
-        //         </Box>
-        //     </Box>
-        // </ThemeProvider>
-        // </Box>
     )
 }
