@@ -4,11 +4,11 @@ import { Box, ButtonBase, Drawer, Paper, Avatar, Typography, Button, IconButton 
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import ClearIcon from '@mui/icons-material/Clear';
+import AutoAwesomeMosaicIcon from '@mui/icons-material/AutoAwesomeMosaic';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import EmailIcon from '@mui/icons-material/Email';
-
 const CustomIconButton = (props) => {
   const {sx, children, ...forwardProps} = props;
   return (
@@ -32,7 +32,8 @@ const actionIcons =
 [ 
   <PlayArrowIcon fontSize = 'large' color = 'secondary'/>,
   <PauseIcon fontSize = 'large' color = 'tertiary'/>,
-  <ClearIcon fontSize = 'large' color = 'primary'/>
+  <ClearIcon fontSize = 'large' color = 'primary'/>,
+  <AutoAwesomeMosaicIcon fontSize='large' color = 'primary'/>
 ]
 export default function Controller({theme, algorithms, actions}) {
   const [open, setopen] = React.useState(false);

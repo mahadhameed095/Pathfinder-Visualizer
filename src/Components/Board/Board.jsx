@@ -5,6 +5,7 @@ import Animator from "../../Utility/Animator";
 import { getRandomInt } from "../../Utility/Random";
 import { djikstraGen, djikstra} from "../../Algorithms/Djikstra";
 import { astarGen, astar} from "../../Algorithms/Astar";
+import { recursive_division } from "../../Algorithms/RecursiveDivision";
 import * as CONSTANTS from "../../Utility/constants";
 import { Grid, IconCell, VisitedCell, NormalCell, Wall, Path } from './Styles'
 export default class Board extends React.Component{
@@ -14,8 +15,8 @@ export default class Board extends React.Component{
     this.target = null; /* Coordinates of target node */
     this.state = {cells : this.__makeBoard(15, 29)}; /* Represents the state of the grid(mxn array) */
     this.grid = React.createRef(); /* The reference to the physical html div that represents the grid. It is used to fetch its dimensions */
-    this.frames = null; /* Holds the current generator object */
-    this.maze_gen = null;
+    this.solver_gen = null; /* Holds the current solver generator object */
+    this.maze_gen = null; /* Holds the maze generator object */
     this.done = false; /* A boolean that is set when the animation is done. and clears while animating */
     this.isMouseDown = false; 
     this.isDragging = null;
@@ -24,94 +25,43 @@ export default class Board extends React.Component{
       "djikstra" : [() => djikstraGen(this.state.cells, this.source, this.target),() => djikstra(this.state.cells, this.source, this.target)],
       "astar" : [ () => astarGen(this.state.cells, this.source, this.target), () => astar(this.state.cells, this.source, this.target)]
     }
-    this.animator = new Animator(60, this.__animate);
+    this.solver_animator = new Animator(60, this.__animateSolver);
+    this.maze_animator = new Animator(60, this.__animateMaze);
   }
   isPlaying(){
-    return this.animator.playing;
+    return this.solver_animator.playing;
   }
   setAlgorithm(algorithm){
     this.algorithmChoice = algorithm;
   }
-  start(){
-    // if(this.__isInteractable() && this.__canPlay())
-    // {
-    //   this.done = false;
-    //   this.frames = this.algorithms[this.algorithmChoice][0]();
-    //   this.setState({
-    //     cells : this.state.cells.map(row => row.map( cell => cell === CONSTANTS.VISITED || 
-    //                                                          cell === CONSTANTS.PATH ? CONSTANTS.NORMAL : cell))
-    //   })
-    // }
-    // this.animator.start();
-    function* recursive_division(m, n){
-      const HORIZONTAL = 0;
-      const VERTICAL = 1;
-      const get_even_rand = (min, max) => {
-        let random;
-        do{
-          random = getRandomInt(min, max);
-        }while(random % 2 === 1);
-        return random;
-      }
-      const get_odd_rand = (min, max) => {
-        let random;
-        do{
-          random = getRandomInt(min, max);
-        }while(random % 2 === 0);
-        return random;
-      }
-
-      const get_orientation = (rows, columns) => {
-        if(rows > columns) return HORIZONTAL;
-        else if(rows < columns) return VERTICAL;
-        else return getRandomInt(0, 2) % 2 === 0 ? VERTICAL : HORIZONTAL;
-      }
-      const maze = Array.from({ length: m }, () => Array.from({ length: n }, () => 1));
-      const stack = [];
-      stack.push({ x : 0, y : 0, rows : maze.length, columns : maze[0].length });
-
-      while(stack.length !== 0){
-        const {x, y, rows, columns} = stack.pop();
-        if(rows > 1 && columns > 1){
-          const orientation = get_orientation(rows, columns);
-          if(orientation === HORIZONTAL){
-            const new_wall = get_even_rand(x, x + rows);
-            const new_hole = get_odd_rand(y, y + columns);
-            for (let i = y; i < y + columns; i++) {
-              maze[new_wall][i] = 0;
-            }
-            maze[new_wall][new_hole] = 1;
-            stack.push({ x : new_wall + 1, y : y, rows : x + rows - new_wall - 1, columns : columns });
-            stack.push({ x : x,            y : y, rows : new_wall - x,        columns : columns });
-            yield maze;
-          }
-          else{
-            const new_wall = get_even_rand(y, y + columns);
-            const new_hole = get_odd_rand(x, x + rows);
-            for (let i = x; i < x + rows; i++) {
-              maze[i][new_wall] = 0;
-            }
-            maze[new_hole][new_wall] = 1;
-            stack.push({ x : x, y : new_wall + 1, rows : rows, columns : y + columns - new_wall - 1 });
-            stack.push({ x : x, y : y,            rows : rows, columns : new_wall - y });
-            yield maze;
-         }
-        }
-      }
-      return maze;
+  generateMaze(){
+    if(this.__isInteractable()){
+      this.done = false;
+      this.maze_gen = recursive_division(this.state.cells.length, this.state.cells[0].length);
+      this.maze_animator.start();
     }
-    const [m, n] = [this.state.cells.length, this.state.cells[0].length];
-    if(this.maze_gen === null)
-      this.maze_gen = recursive_division(m, n);
-    this.setState({cells: this.maze_gen.next().value});
+  }
+  start(){
+    if(this.__isInteractable() && this.__canPlay())
+    {
+      this.done = false;
+      this.solver_gen = this.algorithms[this.algorithmChoice][0]();
+      this.setState({
+        cells : this.state.cells.map(row => row.map( cell => cell === CONSTANTS.VISITED || 
+                                                             cell === CONSTANTS.PATH ? CONSTANTS.NORMAL : cell))
+      })
+    }
+    this.solver_animator.start();
   }
   stop(){
-    this.animator.stop();
+    this.solver_animator.stop();
   }
   clear(){
     this.done = false;
-    this.frames = null;
-    this.animator.stop();
+    this.solver_gen = null;
+    this.maze_gen = null;
+    this.solver_animator.stop();
+    this.maze_animator.stop();
     this.setState({
       cells : this.state.cells.map(row => row.map(cell => (cell === CONSTANTS.SOURCE || cell === CONSTANTS.TARGET) ? cell : CONSTANTS.NORMAL))
     });
@@ -123,12 +73,12 @@ export default class Board extends React.Component{
   componentWillUnmount(){
     window.removeEventListener('resize', this.__resizeGrid);
   }
-  __animate = (animatorRef) => { /* Used Arrow function as this is going to be called in the animator class. Arrow functions bind 'this' to the context where the function is declared */
-    const nextFrame = this.frames.next();
+  __animateSolver = (animatorRef) => { /* Used Arrow function as this is going to be called in the animator class. Arrow functions bind 'this' to the context where the function is declared */
+    const nextFrame = this.solver_gen.next();
     let board;
     if(nextFrame.done){
       animatorRef.stop();
-      this.frames = null;
+      this.solver_gen = null;
       this.done = true;
       if(nextFrame.value === null) alert("No pathh!!!");
       return;
@@ -143,6 +93,16 @@ export default class Board extends React.Component{
     this.setState({cells:board});
     this.forceUpdate();
   }
+  __animateMaze = (animatorRef) => {
+    const nextFrame = this.maze_gen.next();
+    if(nextFrame.done){
+      this.maze_gen = null;
+      animatorRef.stop();
+      nextFrame.value[this.source[0]][this.source[1]] = CONSTANTS.SOURCE;
+      nextFrame.value[this.target[0]][this.target[1]] = CONSTANTS.TARGET;  
+    }
+    this.setState({cells : nextFrame.value});
+  }
   __resizeGrid = () => {
       this.clear();
       const containerWidth = this.grid.current.offsetWidth;
@@ -156,7 +116,7 @@ export default class Board extends React.Component{
     return this.isDragging === null;
   }
   __isInteractable(){
-    return this.frames === null;
+    return this.solver_gen === null && this.maze_gen === null;
   }
   __makeBoard(rows, columns){
     const board = Array.from({length: rows},()=> Array.from({length: columns}, () => CONSTANTS.NORMAL));

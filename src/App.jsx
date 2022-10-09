@@ -37,11 +37,11 @@ export default function App() {
         "Start" : () => board.current?.start(),
         "Stop" : () => board.current?.stop(),
         "Clear" : () => board.current?.clear(),
+        "Generate Maze" : () => board.current?.generateMaze(),
     }
     const algorithms = {
         "Djikstra" : () => board.current?.setAlgorithm("djikstra"),
         "A* Search" : () => board.current?.setAlgorithm("astar"),
-        "Swarm" : () => board.current?.setAlgorithm("djikstra")
     }
     return (
         <ThemeProvider theme={theme}>
