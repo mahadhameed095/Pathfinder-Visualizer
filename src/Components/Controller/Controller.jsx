@@ -9,6 +9,8 @@ import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import EmailIcon from '@mui/icons-material/Email';
+import links from '../../links';
+import profile from '../../Assets/profile.jpg';
 const CustomIconButton = (props) => {
   const {sx, children, ...forwardProps} = props;
   return (
@@ -48,7 +50,7 @@ export default function Controller({theme, algorithms, actions}) {
       >
         <Box height = '100%' sx = {{display : 'flex', justifyContent: 'space-between', flexDirection : 'column'}}>
           <Paper component={ButtonBase}  sx = {{display : "flex", px : 3, py : 2, m:3, mt:4, boxShadow : 3, borderRadius : 4}}>
-            <Avatar sx = {{mr: 3}}>M</Avatar>
+            <Avatar sx = {{mr: 3, width: 48, height: 48}} src={profile}>M</Avatar>
             <Box>
               <Typography fontWeight='bold'>Mahad Hameed</Typography>
               <Typography color='textSecondary' textAlign='initial'>Creator</Typography>
@@ -83,10 +85,10 @@ export default function Controller({theme, algorithms, actions}) {
             <IconButton>
               <EmailIcon fontSize='large'/>
             </IconButton>
-            <IconButton>
+            <IconButton onClick={() => window.open(links.github, "_blank")}>
               <GitHubIcon fontSize='large'/>
             </IconButton>
-            <IconButton>
+            <IconButton onClick={() => window.open(links.linkedin, "_blank")}>
               <LinkedInIcon fontSize='large'/>
             </IconButton>
           </Box>

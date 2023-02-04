@@ -38,6 +38,7 @@ const GridCell = styled.div`
 `;
 
 const IconCell = styled(GridCell)`
+  border : solid ${props => props.held ? 3 : 0}px gold;
   animation: ${creation} 0.5s forwards;
   background-size: cover;
   background-image:url(${props => props.image});

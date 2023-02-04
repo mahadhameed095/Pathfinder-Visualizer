@@ -21,6 +21,7 @@ export default class Board extends React.Component{
     this.isMouseDown = false; 
     this.isDragging = null;
     this.algorithmChoice = "djikstra";
+    this.cellHeld = null;
     this.algorithms = {
       "djikstra" : [() => djikstraGen(this.state.cells, this.source, this.target),() => djikstra(this.state.cells, this.source, this.target)],
       "astar" : [ () => astarGen(this.state.cells, this.source, this.target), () => astar(this.state.cells, this.source, this.target)]
@@ -164,7 +165,6 @@ export default class Board extends React.Component{
         endRef[0] = row ; endRef[1] = column;
         board[endRef[0]][endRef[1]] = this.isDragging;
       }
-      
       else{
         board = this.__updateIndices([[row, column]], [val === CONSTANTS.WALL ? CONSTANTS.NORMAL : CONSTANTS.WALL], this.state.cells);
       }
@@ -174,7 +174,25 @@ export default class Board extends React.Component{
   }
   __cellClicked(row, column, val){
     if(this.__isInteractable()){
-      let board = this.__updateIndices([[row, column]], [val === CONSTANTS.WALL ? CONSTANTS.NORMAL : CONSTANTS.WALL], this.state.cells);
+      let board;
+      if(this.cellHeld){
+
+        board = this.__updateIndices([[row, column]], [this.cellHeld], this.state.cells);
+        const endRef = this.cellHeld === CONSTANTS.SOURCE ? this.source : this.target;
+        board[endRef[0]][endRef[1]] = CONSTANTS.NORMAL;
+        endRef[0] = row ; endRef[1] = column;
+        // if(this.cellHeld === CONSTANTS.SOURCE){
+        //   board[this.source[0]][this.source[1]] = CONSTANTS.NORMAL;
+        //   this.source = [row, column];
+        // }
+        // else{
+        //   board[this.target[0]][this.target[1]] = CONSTANTS.NORMAL;
+        //   this.target = [row, column];
+        // }
+        this.cellHeld = null;
+      }
+      else
+        board = this.__updateIndices([[row, column]], [val === CONSTANTS.WALL ? CONSTANTS.NORMAL : CONSTANTS.WALL], this.state.cells);
       if(this.done) board = this.__redoWithoutAnimation(board);
       this.setState({ cells : board });
     }
@@ -185,12 +203,16 @@ export default class Board extends React.Component{
                   onMouseMove : (id === CONSTANTS.SOURCE || id === CONSTANTS.TARGET) 
                                  ? () =>this.isMouseDown && (this.isDragging = id) /* For source and target cells */
                                  :() => this.__cellDragged(row, column, id), /* For all other cells */
+                  EndOnClick : () =>{
+                    this.cellHeld = id;
+                    this.forceUpdate();
+                  },
                   onClick : () => this.__cellClicked(row, column, id)
                 };
     switch(id){
       case CONSTANTS.NORMAL : return <NormalCell {...args}/>; /*Normal Cell*/
-      case CONSTANTS.SOURCE : return <IconCell key= {args["key"]} onMouseMove = {args["onMouseMove"]} image = {Source}/> /* Source node */
-      case CONSTANTS.TARGET : return <IconCell key= {args["key"]} onMouseMove = {args["onMouseMove"]} image = {Target}/> /* Target node */
+      case CONSTANTS.SOURCE : return <IconCell key= {args["key"]} onClick = {args["EndOnClick"]} onMouseMove = {args["onMouseMove"]} image = {Source} held={this.cellHeld === CONSTANTS.SOURCE}/> /* Source node */
+      case CONSTANTS.TARGET : return <IconCell key= {args["key"]} onClick = {args["EndOnClick"]} onMouseMove = {args["onMouseMove"]} image = {Target} held={this.cellHeld === CONSTANTS.TARGET}/> /* Target node */
       case CONSTANTS.WALL : return <Wall {...args}/>; /* Wall */
       case CONSTANTS.PATH : return <Path {...args} shouldAnimate = {!this.done}/>; /* Path */
       case CONSTANTS.VISITED : return <VisitedCell {...args} shouldAnimate = {!this.done}/>; /* Visisted cell */
@@ -200,6 +222,7 @@ export default class Board extends React.Component{
   render(){
     return(
     <React.Fragment>
+      {console.log("Rendered")}
         <Grid ref={this.grid} n={this.state.cells[0].length} 
               onMouseDown = {() => this.isMouseDown = true} 
               onMouseUp = {() => { this.isMouseDown = false; this.isDragging = null;}}
