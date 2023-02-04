@@ -157,8 +157,14 @@ export default class Board extends React.Component{
   __cellDragged(row, column, val){
     if(this.__isInteractable() && this.isMouseDown){
       let board = null;
-      
-      if(this.isDragging !== null){
+      if(this.cellHeld){
+        board = this.__updateIndices([[row, column]], [this.cellHeld], this.state.cells);
+        const endRef = this.cellHeld === CONSTANTS.SOURCE ? this.source : this.target;
+        board[endRef[0]][endRef[1]] = CONSTANTS.NORMAL;
+        endRef[0] = row ; endRef[1] = column;
+        this.cellHeld = null;
+      }
+      else if(this.isDragging){
         const endRef = this.isDragging === CONSTANTS.SOURCE ? this.source : this.target;
         board = [...this.state.cells];
         board[endRef[0]][endRef[1]] = CONSTANTS.NORMAL;
@@ -181,14 +187,6 @@ export default class Board extends React.Component{
         const endRef = this.cellHeld === CONSTANTS.SOURCE ? this.source : this.target;
         board[endRef[0]][endRef[1]] = CONSTANTS.NORMAL;
         endRef[0] = row ; endRef[1] = column;
-        // if(this.cellHeld === CONSTANTS.SOURCE){
-        //   board[this.source[0]][this.source[1]] = CONSTANTS.NORMAL;
-        //   this.source = [row, column];
-        // }
-        // else{
-        //   board[this.target[0]][this.target[1]] = CONSTANTS.NORMAL;
-        //   this.target = [row, column];
-        // }
         this.cellHeld = null;
       }
       else
