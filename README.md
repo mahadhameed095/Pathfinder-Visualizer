@@ -1,5 +1,5 @@
 # Pathfinder-Visualizer
-A pathfinder visualizer app built with react js. See it live [here]( https://thanatos095.github.io/Pathfinder-Visualizer/).
+A pathfinder visualizer app built with react js. See it live [here]( https://mahadhameed095.github.io/Pathfinder-Visualizer/).
 
 ## Features
 + A graph visualized as interactable grid of cells.
