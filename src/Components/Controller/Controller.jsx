@@ -97,7 +97,7 @@ export default function Controller({theme, algorithms, actions}) {
       <Box 
         display = "flex"
         flexDirection = "column"
-        width = "100px"
+        minWidth = "100px"
         alignItems = "center"
         justifyContent="space-around"
         overflow="auto"
