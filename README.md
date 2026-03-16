@@ -10,8 +10,8 @@ A pathfinder visualizer app built with react js. See it live [here]( https://mah
 + Fully animated real time visualization.
 
 ## Algorithms
-+ Djikstra
-+ Astar
++ Dijkstra
++ A*
 
 ## Maze generation
 + Recursive divide algorithm
